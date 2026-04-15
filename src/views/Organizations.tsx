@@ -167,7 +167,7 @@ export const Organizations = () => {
   const [showModal, setShowModal] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: orgs = [], isLoading: loading, isError, refetch } = useQuery<Org[]>({
+  const { data: orgs = [], isLoading: loading } = useQuery<Org[]>({
     queryKey: qk.organizations(),
     queryFn: async () => {
       const res = await api.get("/organizations", { params: { limit: 100 } });

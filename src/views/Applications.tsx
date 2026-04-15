@@ -10,8 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import api from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 
-type Status = "drafting" | "submitted" | "under-review" | "awarded" | "declined" | "in_review" | "rejected";
-
 type AppItem = {
   id: string;
   grant: string;
@@ -309,7 +307,7 @@ const AppCard = ({ app }: { app: AppItem }) => {
 export const Applications = () => {
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const { data: rawApps = [], isLoading: loading, isError, refetch, isFetching } = useQuery<AppItem[]>({
+  const { data: rawApps = [], isLoading: loading, refetch, isFetching } = useQuery<AppItem[]>({
     queryKey: qk.applications(),
     queryFn: async () => {
       const res = await api.get("/applications", { params: { limit: 100 } });

@@ -44,7 +44,6 @@ const SECTIONS = [
   { key: "budgetSummary", label: "Budget Summary" },
 ] as const;
 
-type SectionKey = typeof SECTIONS[number]["key"];
 type ViewMode = "original" | "aligned" | "compare";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -297,7 +296,7 @@ export const ApplicationBuilder = () => {
               Funder-aligned version available
             </span>
             <span className="[font-family:'Montserrat',Helvetica] text-xs text-[#6b7280]">
-              Compare original AI content against a rewrite tailored to this funder's language and priorities.
+              Compare original AI content against a rewrite tailored to this funder&apos;s language and priorities.
             </span>
           </div>
           <div className="flex items-center gap-1 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] p-1">

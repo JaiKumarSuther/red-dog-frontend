@@ -26,12 +26,12 @@ const fullWidthItems = [
   { id: "business", title: "Business", sub: "Community programs" },
 ];
 
+const PREDEFINED_TYPES = [...agencyTypes, ...fullWidthItems].map((x) => x.id);
+
 export const OnboardingStep2 = () => {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>(["law-enforcement"]);
   const [otherText, setOtherText] = useState("");
-
-  const PREDEFINED_TYPES = [...agencyTypes, ...fullWidthItems].map((x) => x.id);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

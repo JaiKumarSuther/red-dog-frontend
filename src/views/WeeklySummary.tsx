@@ -156,7 +156,7 @@ export const WeeklySummary = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: digests = [], isLoading: loading, isError, refetch } = useQuery<Digest[]>({
+  const { data: digests = [], isLoading: loading } = useQuery<Digest[]>({
     queryKey: qk.digests(),
     queryFn: async () => {
       const res = await api.get("/digests", { params: { limit: 20 } });

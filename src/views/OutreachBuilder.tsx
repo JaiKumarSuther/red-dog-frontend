@@ -72,8 +72,10 @@ export const OutreachBuilder = () => {
       queryClient.invalidateQueries({ queryKey: qk.outreach() });
       queryClient.invalidateQueries({ queryKey: qk.outreachItem(id) });
     },
-    onError: (err: any) => {
-      const msg = err?.response?.data?.message || "Failed to send email.";
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        "Failed to send email.";
       toast({ title: "Send failed", description: msg, variant: "destructive" });
     },
   });

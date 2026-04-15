@@ -85,7 +85,7 @@ export default function AdminMatchesPage() {
     },
   });
 
-  const rowsRaw = data?.data ?? [];
+  const rowsRaw = useMemo(() => data?.data ?? [], [data?.data]);
   const pagination = data?.pagination;
 
   const sortedRows = useMemo(() => {

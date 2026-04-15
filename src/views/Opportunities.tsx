@@ -47,7 +47,6 @@ const STATUS_STYLES = {
   closed: "bg-gray-100 text-gray-500 border-gray-200",
 };
 
-const fmtAmount = (n?: number) => (n ? "$" + n.toLocaleString() : null);
 const formatAmountRange = (min?: number, max?: number): string | null => {
   const fmt = (n: number) => "$" + n.toLocaleString();
   if (min != null && max != null && min > 0 && max > 0) return `${fmt(min)} – ${fmt(max)}`;

@@ -118,7 +118,7 @@ export const Outbox = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: emails = [], isLoading: loading, isError, refetch } = useQuery<Email[]>({
+  const { data: emails = [], isLoading: loading } = useQuery<Email[]>({
     queryKey: qk.outbox(),
     queryFn: async () => {
       const res = await api.get("/outbox", { params: { limit: 100 } });

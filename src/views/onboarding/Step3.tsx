@@ -24,12 +24,12 @@ const programAreas = [
   { id: "cybersecurity", title: "Cybersecurity & Data Protection", sub: "Network security, encryption" },
 ];
 
+const PREDEFINED_AREAS = programAreas.map((x) => x.id);
+
 export const OnboardingStep3 = () => {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>(["comms"]);
   const [otherText, setOtherText] = useState("");
-
-  const PREDEFINED_AREAS = programAreas.map((x) => x.id);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

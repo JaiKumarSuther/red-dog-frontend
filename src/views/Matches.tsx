@@ -52,9 +52,6 @@ const formatAmountRange = (min?: number, max?: number): string | null => {
   return null;
 };
 
-const fmt = (n: number) =>
-  n >= 1000 ? `$${(n / 1000).toFixed(0)}K` : `$${n}`;
-
 const fmtDate = (s: string | undefined) => {
   if (!s) return "—";
   try {
@@ -207,7 +204,7 @@ export const Matches = () => {
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [previewMatch, setPreviewMatch] = useState<Match | null>(null);
 
-  const { data: matches = [], isLoading: loading, isError, refetch } = useQuery<Match[]>({
+  const { data: matches = [], isLoading: loading, refetch } = useQuery<Match[]>({
     queryKey: qk.matches(),
     queryFn: async () => {
       const res = await api.get("/matches", { params: { limit: 100 } });
