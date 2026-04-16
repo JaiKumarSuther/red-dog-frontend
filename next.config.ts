@@ -4,7 +4,7 @@ const replitDomain = process.env.REPLIT_DEV_DOMAIN ?? "";
 const apiOrigin =
   process.env.API_ORIGIN ||
   process.env.NEXT_PUBLIC_API_ORIGIN ||
-  (process.env.NODE_ENV === "development" ? "http://localhost:4000" : "");
+  "http://localhost:4000";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: [
@@ -15,8 +15,12 @@ const nextConfig: NextConfig = {
     "127.0.0.1",
   ],
   async rewrites() {
-    if (!apiOrigin) return [];
-    return [{ source: "/api/:path*", destination: `${apiOrigin.replace(/\/$/, "")}/api/:path*` }];
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiOrigin.replace(/\/$/, "")}/api/:path*`,
+      },
+    ];
   },
 };
 

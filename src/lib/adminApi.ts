@@ -20,11 +20,15 @@ adminApi.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("rdg_admin_token");
-        localStorage.removeItem("rdg_admin_user");
-        document.cookie = "rdg_admin_token=; path=/; max-age=0";
-        if (!window.location.pathname.startsWith("/admin/login")) {
-          window.location.href = "/admin/login";
+        const reqUrl = String(err.config?.url ?? "");
+        const isAdminLoginAttempt = reqUrl.includes("admin/auth/login");
+        if (!isAdminLoginAttempt) {
+          localStorage.removeItem("rdg_admin_token");
+          localStorage.removeItem("rdg_admin_user");
+          document.cookie = "rdg_admin_token=; path=/; max-age=0";
+          if (!window.location.pathname.startsWith("/admin/login")) {
+            window.location.href = "/admin/login";
+          }
         }
       }
     }

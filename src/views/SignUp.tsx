@@ -13,16 +13,19 @@ import { signUpSchema, type SignUpFormValues } from "@/lib/validation-schemas";
 import api from "@/lib/api";
 import { useAuthGateRedirects } from "@/lib/useAuthGateRedirects";
 import { RedDogLogo } from "@/components/RedDogLogo";
+import { useToast } from "@/hooks/use-toast";
 
 export const SignUp = () => {
   useAuthGateRedirects();
   const router = useRouter();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -34,8 +37,8 @@ export const SignUp = () => {
     setLoading(true);
     try {
       const res = await api.post("/auth/register", {
-        fullName: data.fullName,
-        email: data.email,
+        fullName: data.fullName.trim(),
+        email: String(data.email).trim().toLowerCase(),
         password: data.password,
       });
       const pendingEmail = (res.data?.data?.email as string | undefined) ?? data.email;
@@ -44,10 +47,25 @@ export const SignUp = () => {
       }
       router.push("/otp-verification");
     } catch (err: unknown) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Registration failed. Please try again.";
-      setApiError(msg);
+      const ax = err as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+      const status = ax.response?.status;
+      const message =
+        ax.response?.data?.message || "Signup failed. Please try again.";
+      if (status === 409) {
+        setApiError(null);
+        setError("email", {
+          message: "This email is already registered. Sign in instead.",
+        });
+      } else {
+        setApiError(null);
+        toast({
+          title: "Signup failed",
+          description: message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -116,9 +134,20 @@ export const SignUp = () => {
             </div>
 
             {apiError && (
-              <p className="[font-family:'Montserrat',Helvetica] text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                {apiError}
-              </p>
+              <div className="[font-family:'Montserrat',Helvetica] text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 space-y-2">
+                <p>{apiError}</p>
+                {apiError.toLowerCase().includes("already") && (
+                  <p className="text-xs font-medium text-red-700">
+                    <Link href="/login" className="text-[#ef3e34] underline underline-offset-2 hover:no-underline">
+                      Sign in with this email
+                    </Link>
+                    {" · "}
+                    <Link href="/forgot-password" className="text-[#ef3e34] underline underline-offset-2 hover:no-underline">
+                      Forgot password?
+                    </Link>
+                  </p>
+                )}
+              </div>
             )}
 
             <div className="flex flex-col gap-1.5">

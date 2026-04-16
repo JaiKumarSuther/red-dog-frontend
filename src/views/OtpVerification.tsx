@@ -41,7 +41,7 @@ export const OtpVerification = () => {
   const resetEmail =
     typeof window !== "undefined" ? sessionStorage.getItem("rdg_reset_email")?.trim() || "" : "";
   const mode: "signup" | "reset" = pendingEmail ? "signup" : "reset";
-  const email = pendingEmail || resetEmail || "";
+  const email = (pendingEmail || resetEmail || "").trim().toLowerCase();
 
   const confirmOtp = async () => {
     const code = otp.join("");
@@ -60,7 +60,7 @@ export const OtpVerification = () => {
     setVerifying(true);
     try {
       if (mode === "signup") {
-        const res = await api.post("/auth/verify-email", { email, otp: code });
+        const res = await api.post("/auth/verify-email", { email: email.trim().toLowerCase(), otp: code });
         const { user, token } = res.data?.data as { user: unknown; token: unknown };
         if (!user || !token) throw new Error("missing auth");
         login(user as never, String(token));
@@ -69,7 +69,7 @@ export const OtpVerification = () => {
         }
         router.push("/onboarding");
       } else {
-        const res = await api.post("/auth/verify-otp", { email, otp: code });
+        const res = await api.post("/auth/verify-otp", { email: email.trim().toLowerCase(), otp: code });
         const token = res.data?.data?.resetToken as string | undefined;
         if (!token) throw new Error("missing token");
         if (typeof window !== "undefined") {
@@ -95,7 +95,7 @@ export const OtpVerification = () => {
 
     try {
       const endpoint = mode === "signup" ? "/auth/resend-verification" : "/auth/forgot-password";
-      await api.post(endpoint, { email });
+      await api.post(endpoint, { email: email.trim().toLowerCase() });
       toast({ title: "New code sent!", description: "Check your email." });
       setResendCooldown(60);
     } catch (err: unknown) {

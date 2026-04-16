@@ -15,6 +15,7 @@ import { useAuthGateRedirects } from "@/lib/useAuthGateRedirects";
 import { RedDogLogo } from "@/components/RedDogLogo";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { getAuthErrorMessage } from "@/lib/authErrors";
 
 export const Login = () => {
   useAuthGateRedirects();
@@ -23,10 +24,14 @@ export const Login = () => {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [verifyGateEmail, setVerifyGateEmail] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const {
     register,
     handleSubmit,
+    setError,
+    getValues,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -35,33 +40,81 @@ export const Login = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     setApiError(null);
+    setVerifyGateEmail(null);
     setLoading(true);
     try {
-      const res = await api.post("/auth/login", data);
+      const res = await api.post("/auth/login", {
+        email: String(data.email).trim().toLowerCase(),
+        password: data.password,
+      });
       const { user, token } = res.data.data;
       login(user, token);
       // Full navigation so middleware receives cookies set above (client router transitions can omit them).
       const dest = user.onboardingCompleted ? "/dashboard" : "/onboarding";
       window.location.assign(dest);
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Invalid email or password";
-      if (status === 403 && msg.toLowerCase().includes("verify")) {
+      const ax = err as {
+        response?: { status?: number; data?: { message?: string } };
+      };
+      const status = ax.response?.status;
+      const message = ax.response?.data?.message || "";
+
+      if (status === 403 && message.toLowerCase().includes("verify")) {
+        const email = String(data.email).trim().toLowerCase();
         if (typeof window !== "undefined") {
-          sessionStorage.setItem("rdg_pending_email", String(data.email).trim().toLowerCase());
+          sessionStorage.setItem("rdg_pending_email", email);
         }
+        setVerifyGateEmail(email);
         toast({
-          title: "Email not verified",
-          description: "Redirecting to verification…",
+          title: "Your email is not verified yet",
+          description: "Check your inbox for the verification code.",
         });
-        setTimeout(() => router.push("/otp-verification"), 1500);
         return;
       }
+
+      if (status === 401 || status === 400) {
+        setError("password", {
+          message: "Incorrect email or password.",
+        });
+        return;
+      }
+
+      const msg = getAuthErrorMessage(
+        err,
+        "Unable to sign in right now. Please try again in a moment."
+      );
       setApiError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    const email = verifyGateEmail || getValues("email")?.trim().toLowerCase() || "";
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Enter your email above, then try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setResendLoading(true);
+    try {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("rdg_pending_email", email);
+      }
+      await api.post("/auth/resend-verification", { email });
+      toast({
+        title: "Code sent",
+        description: "Check your email for a new verification code.",
+      });
+      router.push("/otp-verification");
+    } catch (err: unknown) {
+      const msg = getAuthErrorMessage(err, "Could not resend the code. Try again.");
+      toast({ title: "Could not resend", description: msg, variant: "destructive" });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -131,6 +184,27 @@ export const Login = () => {
               <p className="[font-family:'Montserrat',Helvetica] text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                 {apiError}
               </p>
+            )}
+
+            {verifyGateEmail && (
+              <div className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 [font-family:'Montserrat',Helvetica] text-sm text-amber-900">
+                <p className="font-medium">Finish verifying your email to sign in.</p>
+                <button
+                  type="button"
+                  disabled={resendLoading}
+                  onClick={() => void handleResendVerification()}
+                  className="h-10 rounded-lg bg-[#ef3e34] px-3 text-sm font-bold text-white transition-colors hover:bg-[#d63530] disabled:opacity-60"
+                >
+                  {resendLoading ? "Sending…" : "Resend verification code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/otp-verification")}
+                  className="text-xs font-semibold text-[#ef3e34] underline-offset-2 hover:underline"
+                >
+                  I already have a code — enter it
+                </button>
+              </div>
             )}
 
             <div className="flex flex-col gap-1.5">

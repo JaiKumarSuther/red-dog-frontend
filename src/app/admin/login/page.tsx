@@ -12,6 +12,7 @@ import { useAuthGateRedirects } from "@/lib/useAuthGateRedirects";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { getAuthErrorMessage } from "@/lib/authErrors";
 
 const schema = z.object({
   email: z.string().email(),
@@ -35,15 +36,15 @@ export default function AdminLoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await adminApi.post("admin/auth/login", data);
+      const res = await adminApi.post("admin/auth/login", {
+        email: String(data.email).trim().toLowerCase(),
+        password: data.password,
+      });
       const { user, token } = res.data.data;
       login(user, token);
       window.location.assign("/admin/dashboard");
     } catch (e: unknown) {
-      const msg =
-        (e as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Sign in failed";
-      setError(msg);
+      setError(getAuthErrorMessage(e, "Unable to sign in. Please try again."));
     } finally {
       setLoading(false);
     }

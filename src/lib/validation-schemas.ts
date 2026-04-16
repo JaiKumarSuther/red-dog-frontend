@@ -9,7 +9,9 @@ export const emailField = z
 export const passwordField = z
   .string()
   .min(1, "Password is required")
-  .min(8, "Password must be at least 8 characters");
+  .refine((val) => val.length === 0 || val.length >= 8, {
+    message: "Password must be at least 8 characters",
+  });
 
 export const optionalUrlField = z
   .string()
@@ -28,7 +30,7 @@ export const signUpSchema = z.object({
     .string()
     .trim()
     .min(1, "Full name is required")
-    .min(2, "Enter at least 2 characters"),
+    .min(2, "Full name must be at least 2 characters"),
   email: emailField,
   password: passwordField,
 });
