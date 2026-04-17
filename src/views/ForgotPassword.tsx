@@ -25,6 +25,7 @@ export const ForgotPassword = () => {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -40,13 +41,34 @@ export const ForgotPassword = () => {
       }
       toast({
         title: "Check your email",
-        description: "If an account exists, we sent a 6-digit code.",
+        description: "If an account exists with that email, a 6-digit code has been sent. Check your inbox and spam folder.",
       });
-      router.push("/otp-verification?flow=reset");
-    } catch {
+      router.push("/otp-verification");
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        "Something went wrong. Please try again.";
+
+      if (status === 404) {
+        setError("email", {
+          message: "No account found with this email. Please sign up first.",
+        });
+        return;
+      }
+
+      if (status === 429) {
+        toast({
+          title: "Too many attempts",
+          description: "Please wait 15 minutes before trying again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Request failed",
-        description: "Could not send reset code. Try again later.",
+        title: "Error",
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -85,7 +107,17 @@ export const ForgotPassword = () => {
               {...register("email")}
             />
             {errors.email && (
-              <p className="[font-family:'Montserrat',Helvetica] text-xs text-red-600">{errors.email.message}</p>
+              <p className="[font-family:'Montserrat',Helvetica] text-xs text-red-600">
+                {errors.email.message}
+                {errors.email.message?.includes("sign up") && (
+                  <>
+                    {" "}
+                    <Link href="/signup" className="font-semibold underline">
+                      Sign up here
+                    </Link>
+                  </>
+                )}
+              </p>
             )}
           </div>
 
