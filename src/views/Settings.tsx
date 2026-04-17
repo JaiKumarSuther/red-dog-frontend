@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -252,13 +253,21 @@ export const Settings = () => {
             <div className="flex flex-col gap-2 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
               <span className="[font-family:'Montserrat',Helvetica] font-semibold text-[#111827] text-sm">{orgName || "—"}</span>
               {!editingProfile && (
-                <button
-                  type="button"
-                  onClick={() => setEditingProfile(true)}
-                  className="[font-family:'Montserrat',Helvetica] text-xs font-semibold text-[#ef3e34] hover:underline text-left"
-                >
-                  Edit agency profile
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    href="/settings/agency"
+                    className="[font-family:'Montserrat',Helvetica] text-xs font-semibold text-[#374151] hover:underline"
+                  >
+                    View full profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setEditingProfile(true)}
+                    className="[font-family:'Montserrat',Helvetica] text-xs font-semibold text-[#ef3e34] hover:underline text-left"
+                  >
+                    Edit agency profile
+                  </button>
+                </div>
               )}
             </div>
             {editingProfile && (
