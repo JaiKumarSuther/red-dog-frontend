@@ -131,11 +131,8 @@ export const Opportunities = () => {
     },
   });
 
-  const opportunities = oppPayload?.data ?? [];
-  const ranked = useMemo(
-    () => mergeRankedOpportunities(matchRows, opportunities),
-    [matchRows, opportunities]
-  );
+  const opportunities = useMemo(() => oppPayload?.data ?? [], [oppPayload?.data]);
+  const ranked = useMemo(() => mergeRankedOpportunities(matchRows, opportunities), [matchRows, opportunities]);
 
   const computeMutation = useMutation({
     mutationFn: () => api.post("/matches/compute-all", {}),

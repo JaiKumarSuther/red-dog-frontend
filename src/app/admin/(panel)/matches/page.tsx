@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import adminApi from "@/lib/adminApi";
@@ -37,14 +36,6 @@ type MatchRow = {
 };
 
 type SortKey = "agency" | "opportunity" | "fitScore" | "appStatus";
-
-function breakdownSummary(b: Breakdown) {
-  if (!b || typeof b !== "object") return "—";
-  const parts = Object.entries(b)
-    .filter(([, v]) => typeof v === "number" && v > 0)
-    .map(([k, v]) => `${k}: ${v}`);
-  return parts.length ? parts.join(", ") : "—";
-}
 
 function appStatusBadgeCls(s: string) {
   if (s === "approved" || s === "awarded") return "bg-[#dcfce7] text-[#16a34a]";
