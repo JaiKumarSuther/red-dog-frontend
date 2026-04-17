@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import adminApi from "@/lib/adminApi";
 import { AdminTableViewLink } from "@/components/admin/AdminTableViewLink";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type DashboardData = {
@@ -32,23 +30,6 @@ type DashboardData = {
 };
 
 export default function AdminDashboardPage() {
-  const qc = useQueryClient();
-  const [recomputeMsg, setRecomputeMsg] = useState<string | null>(null);
-
-  const recomputeMatches = useMutation({
-    mutationFn: async () => {
-      setRecomputeMsg(null);
-      const res = await adminApi.post("admin/matches/recompute-all");
-      return res.data;
-    },
-    onSuccess: (res) => {
-      setRecomputeMsg((res.data as { message?: string })?.message || "Match scores updated for all agencies.");
-      qc.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-      qc.invalidateQueries({ queryKey: ["admin", "activity-logs"] });
-    },
-    onError: () => setRecomputeMsg("Recompute failed."),
-  });
-
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "dashboard"],
     queryFn: async () => {
@@ -87,19 +68,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <h1 className="[font-family:'Montserrat',Helvetica] text-2xl font-bold text-[#111827]">Dashboard</h1>
-        <Button
-          type="button"
-          variant="outline"
-          className="border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]"
-          disabled={recomputeMatches.isPending}
-          onClick={() => recomputeMatches.mutate()}
-        >
-          {recomputeMatches.isPending ? "Recomputing match scores…" : "Recompute all match scores"}
-        </Button>
       </div>
-      {recomputeMsg && (
-        <p className="text-sm text-[#374151] [font-family:'Montserrat',Helvetica]">{recomputeMsg}</p>
-      )}
       <p className="text-sm text-[#6b7280]">
         Staff-only audit trail:{" "}
         <Link href="/admin/activity" className="font-medium text-[#ef3e34] hover:underline">
