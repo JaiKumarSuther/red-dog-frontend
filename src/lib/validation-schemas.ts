@@ -55,23 +55,90 @@ export const otpSchema = z
   .regex(/^\d{6}$/, "Code must be 6 digits");
 
 export const onboardingStep1Schema = z.object({
-  organizationName: z.string().trim().min(1, "Organization name is required"),
-  location: z.string().trim().min(1, "Location is required"),
-  websiteUrl: optionalUrlField,
+  organizationName: z
+    .string()
+    .trim()
+    .min(1, "Organization name is required")
+    .max(200, "Name must be 200 characters or fewer"),
+  organizationType: z.enum(
+    ["police", "fire", "ems", "school", "healthcare", "nonprofit", "municipality", "other"],
+    { errorMap: () => ({ message: "Please select an organization type" }) }
+  ),
+  city: z
+    .string()
+    .trim()
+    .min(1, "City is required")
+    .max(100, "City name too long"),
+  state: z.string().trim().min(1, "State is required"),
+  county: z
+    .string()
+    .trim()
+    .min(1, "County is required")
+    .max(100, "County name too long"),
+  website: z
+    .string()
+    .trim()
+    .optional()
+    .refine((v) => !v || v === "" || /^https?:\/\/.+/i.test(v), {
+      message: "Enter a valid URL starting with https://",
+    }),
+});
+
+
+export const onboardingStep2Schema = z.object({
   missionStatement: z
     .string()
     .trim()
     .min(1, "Mission statement is required")
     .min(20, "Please write at least 20 characters"),
-});
-
-export const onboardingStep4Schema = z.object({
-  requestDescription: z
+  populationServed: z
     .string()
     .trim()
-    .min(1, "Please describe your request")
-    .min(20, "Please write at least 20 characters"),
+    .min(1, "Population served is required")
+    .refine((v) => !isNaN(Number(v)) && Number(v) > 0, {
+      message: "Enter a valid number greater than 0",
+    }),
+  serviceArea: z.enum(["local", "county", "regional", "statewide"], {
+    errorMap: () => ({ message: "Please select a service area" }),
+  }),
+  staffSizeRange: z.enum(["1-10", "11-25", "26-50", "50+"], {
+    errorMap: () => ({ message: "Please select a staff size" }),
+  }),
+  annualVolume: z.string().trim().optional(),
 });
+
+
+export const onboardingStep3Schema = z.object({
+  biggestChallenge: z
+    .string()
+    .trim()
+    .min(1, "Please describe your biggest challenge")
+    .min(20, "Please write at least 20 characters"),
+  urgencyStatement: z
+    .string()
+    .trim()
+    .min(1, "Please describe what happens if not solved")
+    .min(10, "Please write at least 10 characters"),
+});
+
+
+export const onboardingStep4Schema = z.object({
+  projectTitle: z
+    .string()
+    .trim()
+    .min(1, "Project title is required")
+    .max(150, "Title must be 150 characters or fewer"),
+  specificRequest: z
+    .string()
+    .trim()
+    .min(1, "Please describe what you need funding for")
+    .min(20, "Please write at least 20 characters"),
+  whobenefits: z
+    .string()
+    .trim()
+    .min(1, "Please specify who benefits from this project"),
+});
+
 
 export const organizationFormSchema = z.object({
   name: z.string().trim().min(1, "Organization name is required"),
@@ -238,7 +305,8 @@ export type SignUpFormValues = z.infer<typeof signUpSchema>;
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
 export type CreatePasswordFormValues = z.infer<typeof createPasswordSchema>;
 export type OnboardingStep1FormValues = z.infer<typeof onboardingStep1Schema>;
-// Legacy alias kept so Step5 completeOnboarding can still spread all fields
+export type OnboardingStep2FormValues = z.infer<typeof onboardingStep2Schema>;
+export type OnboardingStep3FormValues = z.infer<typeof onboardingStep3Schema>;
 export type OnboardingStep4FormValues = z.infer<typeof onboardingStep4Schema>;
 export type OrganizationFormValues = z.infer<typeof organizationFormSchema>;
 export type AgencyFormValues = z.infer<typeof agencyFormSchema>;

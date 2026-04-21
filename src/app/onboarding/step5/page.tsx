@@ -1,5 +1,5 @@
-import { OnboardingStep5 } from "@/views/onboarding/Step5";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <OnboardingStep5 />;
+export default function Step5Page() {
+  redirect("/onboarding/step4");
 }

@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/AuthContext";
 const menuItems: ShellMenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: "/figmaAssets/svg-8.svg", path: "/dashboard" },
   { id: "opportunities", label: "Opportunities", icon: "/figmaAssets/svg-14.svg", path: "/opportunities" },
-  { id: "matches", label: "Matches", icon: "/figmaAssets/svg-6.svg", path: "/matches" },
   { id: "applications", label: "Applications", icon: "/figmaAssets/svg-11.svg", path: "/applications" },
   { id: "funders", label: "Funders", icon: "/figmaAssets/svg-12.svg", path: "/funders" },
   { id: "alerts", label: "Alerts", icon: "/figmaAssets/svg-15.svg", path: "/alerts" },

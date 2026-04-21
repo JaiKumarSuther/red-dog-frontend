@@ -12,7 +12,6 @@ const ADMIN_MENU: ShellMenuItem[] = [
   { id: "admin-agencies", label: "Agencies", icon: "/figmaAssets/svg-10.svg", path: "/admin/agencies" },
   { id: "admin-opportunities", label: "Opportunities", icon: "/figmaAssets/svg-14.svg", path: "/admin/opportunities" },
   { id: "admin-funders", label: "Funders", icon: "/figmaAssets/svg-12.svg", path: "/admin/funders" },
-  { id: "admin-matches", label: "Matches", icon: "/figmaAssets/svg-6.svg", path: "/admin/matches" },
   { id: "admin-applications", label: "Applications", icon: "/figmaAssets/svg-11.svg", path: "/admin/applications" },
   { id: "admin-users", label: "Users", icon: "/figmaAssets/svg-5.svg", path: "/admin/users" },
   { id: "admin-settings", label: "Settings", icon: "/figmaAssets/svg-9.svg", path: "/admin/settings" },

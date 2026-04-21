@@ -347,7 +347,7 @@ export const Settings = () => {
               <option value="no">No — we typically cannot meet local match</option>
             </select>
             <p className="text-xs text-[#9ca3af] [font-family:'Montserrat',Helvetica]">
-              Improves fit scores for opportunities that flag a local match requirement.
+              Local match means your organization can contribute a percentage of the project cost alongside grant funding. Some funders require this.
             </p>
           </div>
         </SettingsSectionCard>

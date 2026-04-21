@@ -10,6 +10,45 @@ import { SettingsSectionCard } from "@/components/settings/SettingsPrimitives";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
+// ── Constants ──────────────────────────────────────────────────────────────
+
+const AGENCY_TYPE_OPTIONS = [
+  { value: "police", label: "Police" },
+  { value: "fire", label: "Fire" },
+  { value: "ems", label: "EMS" },
+  { value: "school", label: "School" },
+  { value: "healthcare", label: "Healthcare" },
+  { value: "nonprofit", label: "Nonprofit" },
+  { value: "municipality", label: "Municipality" },
+  { value: "other", label: "Other" },
+];
+
+const PROGRAM_AREA_OPTIONS = [
+  { value: "equipment", label: "Equipment" },
+  { value: "safety", label: "Safety" },
+  { value: "communications", label: "Communications" },
+  { value: "training", label: "Training" },
+  { value: "infrastructure", label: "Infrastructure" },
+  { value: "technology", label: "Technology" },
+  { value: "community_outreach", label: "Community Outreach" },
+  { value: "other", label: "Other" },
+];
+
+const BUDGET_OPTIONS = [
+  { value: "under_25k", label: "Under $25K" },
+  { value: "25k_50k", label: "$25K\u2013$50K" },
+  { value: "50k_100k", label: "$50K\u2013$100K" },
+  { value: "100k_plus", label: "$100K+" },
+];
+
+const TIMELINE_OPTIONS = [
+  { value: "asap", label: "ASAP" },
+  { value: "3_6_months", label: "3\u20136 months" },
+  { value: "6_12_months", label: "6\u201312 months" },
+];
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
 type Org = {
   _id: string;
   name?: string;
@@ -35,33 +74,7 @@ type ApiSettings = {
   organizationId?: { _id?: string } | string | null;
 };
 
-const PRESET_AGENCY_TYPES = [
-  "law_enforcement",
-  "fire_services",
-  "911_centers",
-  "emergency_management",
-  "ems",
-  "hospitals",
-  "public_safety_comms",
-  "multi_agency",
-  "utilities",
-  "business",
-] as const;
-
-const PRESET_PROGRAM_AREAS = [
-  "comms",
-  "vehicles",
-  "tech",
-  "facilities",
-  "ppe",
-  "medical",
-  "broadband",
-  "community",
-  "training",
-  "cybersecurity",
-] as const;
-
-const PRESET_GOALS = ["discover", "track", "ai-write", "ai-score"] as const;
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function row(label: string, value?: React.ReactNode) {
   return (
@@ -69,47 +82,57 @@ function row(label: string, value?: React.ReactNode) {
       <dt className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
         {label}
       </dt>
-      <dd className="[font-family:'Montserrat',Helvetica] text-sm text-[#111827]">{value ?? "—"}</dd>
+      <dd className="[font-family:'Montserrat',Helvetica] text-sm text-[#111827]">{value ?? "\u2014"}</dd>
     </div>
   );
 }
 
 function listOrDash(arr?: string[]) {
-  if (!arr || arr.length === 0) return "—";
+  if (!arr || arr.length === 0) return "\u2014";
   return arr.join(", ");
 }
 
 function budgetLabel(v?: string) {
-  if (!v) return "—";
+  if (!v) return "\u2014";
   const map: Record<string, string> = {
     under_25k: "Under $25K",
-    "25k_150k": "$25K – $150K",
-    "150k_500k": "$150K – $500K",
+    "25k_50k": "$25K\u2013$50K",
+    "50k_100k": "$50K\u2013$100K",
+    "100k_plus": "$100K+",
+    // legacy
+    "25k_150k": "$25K \u2013 $150K",
+    "150k_500k": "$150K \u2013 $500K",
     "500k_plus": "$500K+",
-    "under-25k": "Under $25K",
-    "25k-100k": "$25K – $150K",
-    "100k-500k": "$100K – $500K",
-    "500k-plus": "$500K+",
   };
   return map[v] ?? v;
 }
 
 function timelineLabel(v?: string) {
-  if (!v) return "—";
-  const map: Record<string, string> = { urgent: "Urgent", planned: "Planned", any: "Any" };
+  if (!v) return "\u2014";
+  const map: Record<string, string> = {
+    asap: "ASAP",
+    "3_6_months": "3\u20136 months",
+    "6_12_months": "6\u201312 months",
+    urgent: "Urgent",
+    planned: "Planned",
+    any: "Any",
+  };
   return map[v] ?? v;
 }
 
-function parseCsv(v: string) {
-  return v
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+const inputCls =
+  "w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20";
+const labelCls =
+  "[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]";
+const helperCls =
+  "[font-family:'Montserrat',Helvetica] text-xs text-[#6b7280] leading-4 mt-0.5";
+
+// ── Component ──────────────────────────────────────────────────────────────
 
 export function AgencyProfile() {
   const qc = useQueryClient();
   const { toast } = useToast();
+
   const { data: settings } = useQuery<ApiSettings>({
     queryKey: qk.settings(),
     queryFn: async () => {
@@ -140,10 +163,10 @@ export function AgencyProfile() {
     location: "",
     websiteUrl: "",
     missionStatement: "",
-    agencyTypesCsv: "",
-    programAreasCsv: "",
+    agencyType: "",
+    programAreas: [] as string[],
     budgetRange: "under_25k",
-    timeline: "planned",
+    timeline: "asap",
     goalsCsv: "",
     populationServed: "",
     coverageArea: "",
@@ -158,10 +181,10 @@ export function AgencyProfile() {
       location: org.location ?? "",
       websiteUrl: org.websiteUrl ?? "",
       missionStatement: org.missionStatement ?? "",
-      agencyTypesCsv: (org.agencyTypes ?? []).join(", "),
-      programAreasCsv: (org.programAreas ?? []).join(", "),
+      agencyType: (org.agencyTypes ?? [])[0] ?? "",
+      programAreas: org.programAreas ?? [],
       budgetRange: (org.budgetRange as string) ?? "under_25k",
-      timeline: (org.timeline as string) ?? "planned",
+      timeline: (org.timeline as string) ?? "asap",
       goalsCsv: (org.goals ?? []).join(", "),
       populationServed: org.populationServed != null ? String(org.populationServed) : "",
       coverageArea: org.coverageArea ?? "",
@@ -170,6 +193,15 @@ export function AgencyProfile() {
     });
   }, [org]);
 
+  const toggleProgramArea = (value: string) => {
+    setForm((f) => ({
+      ...f,
+      programAreas: f.programAreas.includes(value)
+        ? f.programAreas.filter((v) => v !== value)
+        : [...f.programAreas, value],
+    }));
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const body: Record<string, unknown> = {
@@ -177,20 +209,21 @@ export function AgencyProfile() {
         location: form.location.trim() || undefined,
         websiteUrl: form.websiteUrl.trim() || undefined,
         missionStatement: form.missionStatement.trim() || undefined,
-        agencyTypes: parseCsv(form.agencyTypesCsv),
-        programAreas: parseCsv(form.programAreasCsv),
+        agencyTypes: form.agencyType ? [form.agencyType] : [],
+        programAreas: form.programAreas,
         budgetRange: form.budgetRange,
         timeline: form.timeline,
-        goals: parseCsv(form.goalsCsv),
+        goals: form.goalsCsv
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
         coverageArea: form.coverageArea.trim() || undefined,
         currentEquipment: form.currentEquipment.trim() || undefined,
       };
-
       const pop = form.populationServed.trim();
       const staff = form.numberOfStaff.trim();
       if (pop) body.populationServed = Number(pop);
       if (staff) body.numberOfStaff = Number(staff);
-
       const res = await api.put(`/organizations/${orgId}`, body);
       return res.data;
     },
@@ -209,6 +242,7 @@ export function AgencyProfile() {
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-6 bg-neutral-50 p-4 pb-10 sm:p-6 lg:p-8">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div className="flex flex-col gap-1">
           <Button
@@ -247,7 +281,7 @@ export function AgencyProfile() {
                 onClick={() => saveMutation.mutate()}
                 disabled={saveMutation.isPending || !orgId}
               >
-                {saveMutation.isPending ? "Saving…" : "Save changes"}
+                {saveMutation.isPending ? "Saving\u2026" : "Save changes"}
               </Button>
             </>
           ) : (
@@ -258,7 +292,7 @@ export function AgencyProfile() {
         </div>
       </div>
 
-      {isLoading && <p className="text-sm text-[#6b7280] [font-family:'Montserrat',Helvetica]">Loading…</p>}
+      {isLoading && <p className="text-sm text-[#6b7280] [font-family:'Montserrat',Helvetica]">Loading\u2026</p>}
       {isError && (
         <p className="text-sm text-red-600 [font-family:'Montserrat',Helvetica]">
           Could not load your agency profile.
@@ -267,6 +301,8 @@ export function AgencyProfile() {
 
       {!isLoading && !isError && org && (
         <div className="flex flex-col gap-6">
+
+          {/* ── Overview ── */}
           <SettingsSectionCard
             icon={<span className="[font-family:'Montserrat',Helvetica] font-bold text-[#ef3e34] text-xs">A</span>}
             title="Overview"
@@ -275,43 +311,35 @@ export function AgencyProfile() {
             {editing ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Agency name
-                  </label>
+                  <label className={labelCls}>Agency name</label>
                   <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Location
-                  </label>
+                  <label className={labelCls}>Location</label>
                   <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
                     value={form.location}
                     onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Website URL
-                  </label>
+                  <label className={labelCls}>Website URL</label>
                   <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
                     placeholder="https://"
                     value={form.websiteUrl}
                     onChange={(e) => setForm((f) => ({ ...f, websiteUrl: e.target.value }))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Mission statement
-                  </label>
+                  <label className={labelCls}>Mission statement</label>
                   <textarea
                     rows={4}
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={`${inputCls} resize-none`}
                     value={form.missionStatement}
                     onChange={(e) => setForm((f) => ({ ...f, missionStatement: e.target.value }))}
                   />
@@ -342,18 +370,15 @@ export function AgencyProfile() {
                       {org.websiteUrl}
                     </a>
                   ) : (
-                    "—"
+                    "\u2014"
                   )
-                )}
-                {row(
-                  "Local match capacity",
-                  org.canMeetLocalMatch == null ? "Not specified" : org.canMeetLocalMatch ? "Yes" : "No",
                 )}
                 <div className="sm:col-span-2">{row("Mission statement", org.missionStatement)}</div>
               </dl>
             )}
           </SettingsSectionCard>
 
+          {/* ── Matching inputs ── */}
           <SettingsSectionCard
             icon={<span className="[font-family:'Montserrat',Helvetica] font-bold text-[#ef3e34] text-xs">M</span>}
             title="Matching inputs"
@@ -361,85 +386,96 @@ export function AgencyProfile() {
           >
             {editing ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                {/* Agency Type — single dropdown */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Agency types (comma separated)
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
-                    value={form.agencyTypesCsv}
-                    onChange={(e) => setForm((f) => ({ ...f, agencyTypesCsv: e.target.value }))}
-                  />
-                  <p className="[font-family:'Montserrat',Helvetica] text-xs text-[#9ca3af]">
-                    Examples: {PRESET_AGENCY_TYPES.join(", ")}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Program areas (comma separated)
-                  </label>
-                  <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
-                    value={form.programAreasCsv}
-                    onChange={(e) => setForm((f) => ({ ...f, programAreasCsv: e.target.value }))}
-                  />
-                  <p className="[font-family:'Montserrat',Helvetica] text-xs text-[#9ca3af]">
-                    Examples: {PRESET_PROGRAM_AREAS.join(", ")}
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Budget range
-                  </label>
+                  <label className={labelCls}>Agency type</label>
                   <select
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={`${inputCls} appearance-none cursor-pointer`}
+                    value={form.agencyType}
+                    onChange={(e) => setForm((f) => ({ ...f, agencyType: e.target.value }))}
+                  >
+                    <option value="">Select type\u2026</option>
+                    {AGENCY_TYPE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount Requested — dropdown */}
+                <div className="flex flex-col gap-1.5">
+                  <label className={labelCls}>Amount Requested</label>
+                  <select
+                    className={`${inputCls} appearance-none cursor-pointer`}
                     value={form.budgetRange}
                     onChange={(e) => setForm((f) => ({ ...f, budgetRange: e.target.value }))}
                   >
-                    <option value="under_25k">Under $25K</option>
-                    <option value="25k_150k">$25K – $150K</option>
-                    <option value="150k_500k">$150K – $500K</option>
-                    <option value="500k_plus">$500K+</option>
+                    {BUDGET_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
                   </select>
                 </div>
+
+                {/* Timeline — dropdown */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Timeline
-                  </label>
+                  <label className={labelCls}>Timeline</label>
                   <select
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={`${inputCls} appearance-none cursor-pointer`}
                     value={form.timeline}
                     onChange={(e) => setForm((f) => ({ ...f, timeline: e.target.value }))}
                   >
-                    <option value="urgent">Urgent</option>
-                    <option value="planned">Planned</option>
+                    {TIMELINE_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
                   </select>
                 </div>
+
+                {/* Program Areas — multi-select checkboxes */}
+                <div className="flex flex-col gap-2 sm:col-span-2">
+                  <label className={labelCls}>Program areas</label>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    {PROGRAM_AREA_OPTIONS.map((o) => (
+                      <label
+                        key={o.value}
+                        className="flex items-center gap-2 cursor-pointer [font-family:'Montserrat',Helvetica] text-sm text-[#111827]"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-[#e5e7eb] accent-[#ef3e34]"
+                          checked={form.programAreas.includes(o.value)}
+                          onChange={() => toggleProgramArea(o.value)}
+                        />
+                        {o.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Goals */}
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Goals (comma separated)
-                  </label>
+                  <label className={labelCls}>Goals (comma separated)</label>
                   <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
                     value={form.goalsCsv}
                     onChange={(e) => setForm((f) => ({ ...f, goalsCsv: e.target.value }))}
                   />
-                  <p className="[font-family:'Montserrat',Helvetica] text-xs text-[#9ca3af]">
-                    Examples: {PRESET_GOALS.join(", ")}
+                  <p className={helperCls}>
+                    Goals help us match you with funders whose priorities align with your organization&apos;s strategic objectives.
                   </p>
                 </div>
               </div>
             ) : (
               <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {row("Agency types", listOrDash(org.agencyTypes))}
+                {row("Agency type", listOrDash(org.agencyTypes))}
                 {row("Program areas", listOrDash(org.programAreas))}
-                {row("Budget range", budgetLabel(org.budgetRange))}
+                {row("Amount Requested", budgetLabel(org.budgetRange))}
                 {row("Timeline", timelineLabel(org.timeline))}
                 <div className="sm:col-span-2">{row("Goals", listOrDash(org.goals))}</div>
               </dl>
             )}
           </SettingsSectionCard>
 
+          {/* ── Agency details ── */}
           <SettingsSectionCard
             icon={<span className="[font-family:'Montserrat',Helvetica] font-bold text-[#ef3e34] text-xs">D</span>}
             title="Agency details"
@@ -448,46 +484,39 @@ export function AgencyProfile() {
             {editing ? (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Population served
-                  </label>
+                  <label className={labelCls}>Population served</label>
                   <input
                     type="number"
                     min={0}
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
                     value={form.populationServed}
                     onChange={(e) => setForm((f) => ({ ...f, populationServed: e.target.value }))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Number of staff
-                  </label>
+                  <label className={labelCls}>Number of staff</label>
                   <input
                     type="number"
                     min={0}
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
                     value={form.numberOfStaff}
                     onChange={(e) => setForm((f) => ({ ...f, numberOfStaff: e.target.value }))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Coverage area
-                  </label>
+                  <label className={labelCls}>Coverage Area in Miles</label>
                   <input
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={inputCls}
+                    placeholder="e.g. 50"
                     value={form.coverageArea}
                     onChange={(e) => setForm((f) => ({ ...f, coverageArea: e.target.value }))}
                   />
                 </div>
                 <div className="flex flex-col gap-1.5 sm:col-span-2">
-                  <label className="[font-family:'Montserrat',Helvetica] text-xs font-semibold uppercase tracking-[0.6px] text-[#9ca3af]">
-                    Current equipment
-                  </label>
+                  <label className={labelCls}>Current equipment</label>
                   <textarea
                     rows={3}
-                    className="w-full rounded-lg border border-[#e5e7eb] bg-white px-4 py-2.5 [font-family:'Montserrat',Helvetica] text-sm text-[#111827] focus:border-[#ef3e34] focus:outline-none focus:ring-2 focus:ring-[#ef3e34]/20"
+                    className={`${inputCls} resize-none`}
                     value={form.currentEquipment}
                     onChange={(e) => setForm((f) => ({ ...f, currentEquipment: e.target.value }))}
                   />
@@ -495,16 +524,16 @@ export function AgencyProfile() {
               </div>
             ) : (
               <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {row("Population served", org.populationServed != null ? org.populationServed.toLocaleString() : "—")}
-                {row("Coverage area", org.coverageArea)}
-                {row("Number of staff", org.numberOfStaff != null ? org.numberOfStaff.toLocaleString() : "—")}
+                {row("Population served", org.populationServed != null ? org.populationServed.toLocaleString() : "\u2014")}
+                {row("Coverage Area in Miles", org.coverageArea)}
+                {row("Number of staff", org.numberOfStaff != null ? org.numberOfStaff.toLocaleString() : "\u2014")}
                 <div className="sm:col-span-2">{row("Current equipment", org.currentEquipment)}</div>
               </dl>
             )}
           </SettingsSectionCard>
+
         </div>
       )}
     </div>
   );
 }
-
